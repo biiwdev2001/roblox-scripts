@@ -1,4 +1,3 @@
--- 📦 UI Setup
 local gui = Instance.new("ScreenGui", game.CoreGui)
 local frame = Instance.new("Frame", gui)
 frame.Size = UDim2.new(0, 200, 0, 70)
@@ -24,16 +23,16 @@ button.Text = "Start Auto Drive"
 button.TextColor3 = Color3.new(1, 1, 1)
 button.TextSize = 16
 
--- ⚙️ System Variables
 local autoDrive = false
 local goingForward = true
 
--- 🌍 ตำแหน่งถนน (แก้ให้เหมาะกับแมพของคุณ)
-local START_POS = Vector3.new(0, 5, 0) -- จุดกลางถนนโล่ง
-local Z_MAX = 1200 -- ปลายทาง
-local Z_MIN = -1200 -- ต้นทาง
-local MOVE_STEP = 40
+-- ตำแหน่งถนนโล่ง
+local START_POS = Vector3.new(0, 5, 0)
+local Z_MAX = 1000
+local Z_MIN = -1000
+local MOVE_STEP = 50
 local MOVE_DELAY = 0.15
+local zPos = START_POS.Z
 
 button.MouseButton1Click:Connect(function()
 	autoDrive = not autoDrive
@@ -45,31 +44,24 @@ button.MouseButton1Click:Connect(function()
 			local plr = game.Players.LocalPlayer
 			local char = plr.Character or plr.CharacterAdded:Wait()
 			local seat = char:FindFirstChildWhichIsA("VehicleSeat", true)
-			if not seat then warn("❌ คุณยังไม่นั่งในรถ") return end
+			if not seat then warn("❌ ยังไม่นั่งรถ") return end
 
 			local car = seat:FindFirstAncestorWhichIsA("Model")
-			if not car then warn("❌ ไม่พบ Model รถ") return end
+			if not car then warn("❌ ไม่พบรถ") return end
 
-			-- กำหนด PrimaryPart ถ้ายังไม่มี
-			if not car.PrimaryPart then
-				car.PrimaryPart = seat
-			end
-
-			-- วาร์ปไปเริ่ม
-			car:SetPrimaryPartCFrame(CFrame.new(START_POS))
-			local zPos = START_POS.Z
+			-- วาร์ปไปจุดเริ่ม
+			zPos = START_POS.Z
+			car:MoveTo(Vector3.new(START_POS.X, START_POS.Y, zPos))
 			wait(1)
 
-			while autoDrive and car.PrimaryPart do
-				local direction = goingForward and 1 or -1
-				zPos += MOVE_STEP * direction
+			while autoDrive do
+				local dir = goingForward and 1 or -1
+				zPos += MOVE_STEP * dir
 
 				if zPos >= Z_MAX then goingForward = false end
 				if zPos <= Z_MIN then goingForward = true end
 
-				local newPos = Vector3.new(car.PrimaryPart.Position.X, car.PrimaryPart.Position.Y, zPos)
-				car:SetPrimaryPartCFrame(CFrame.new(newPos))
-
+				car:MoveTo(Vector3.new(car:GetModelCFrame().X, car:GetModelCFrame().Y, zPos))
 				wait(MOVE_DELAY)
 			end
 		end)
